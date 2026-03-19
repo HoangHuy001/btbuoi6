@@ -1,4 +1,5 @@
 let mongoose = require('mongoose');
+const Inventory = require('./inventory') // 👈 thêm dòng này
 
 let productSchema = mongoose.Schema({
     title: {
@@ -35,4 +36,26 @@ let productSchema = mongoose.Schema({
         default: false
     }
 })
-module.exports = new mongoose.model('product', productSchema)
+
+
+// 🔥 THÊM PHẦN NÀY
+productSchema.post('save', async function(doc) {
+    try {
+
+        const exists = await Inventory.findOne({ product: doc._id })
+
+        if (!exists) {
+            await Inventory.create({
+                product: doc._id,
+                stock: 0,
+                reserved: 0,
+                soldCount: 0
+            })
+        }
+
+    } catch (error) {
+        console.error("Create inventory error:", error.message)
+    }
+})
+
+module.exports = mongoose.model('product', productSchema)
